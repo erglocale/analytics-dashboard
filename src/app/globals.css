@@ -1,26 +1,121 @@
 @import "tailwindcss";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
+@theme {
+  /* ergOS brand — matches ergOS-frontend's antd colorPrimary (#f97417) */
+  --color-brand: #f97417;
+  --color-brand-dark: #c2410c;
+  --color-brand-soft: #fff7ed;
 }
 
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+body {
+  background: #ffffff;
+  color: #0f172a;
+  /* same system stack the ergOS frontend uses (Segoe UI on Windows) */
+  font-family:
+    -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu,
+    Cantarell, "Helvetica Neue", sans-serif;
 }
 
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+/* Rendered-markdown styling for the Docs tab (react-markdown output). */
+.doc-prose {
+  font-size: 0.9rem;
+  line-height: 1.65;
+  color: #334155;
+}
+.doc-prose h1 {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: #0f172a;
+  margin: 0 0 0.75rem;
+}
+.doc-prose h2 {
+  font-size: 1.05rem;
+  font-weight: 600;
+  color: #0f172a;
+  margin: 1.75rem 0 0.5rem;
+  padding-top: 0.75rem;
+  border-top: 1px solid #f1f5f9;
+}
+.doc-prose h3 {
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: #1e293b;
+  margin: 1.25rem 0 0.4rem;
+}
+.doc-prose p {
+  margin: 0.6rem 0;
+}
+.doc-prose ul,
+.doc-prose ol {
+  margin: 0.6rem 0;
+  padding-left: 1.4rem;
+}
+.doc-prose ul {
+  list-style: disc;
+}
+.doc-prose ol {
+  list-style: decimal;
+}
+.doc-prose li {
+  margin: 0.25rem 0;
+}
+.doc-prose a {
+  color: var(--color-brand-dark);
+  text-decoration: underline;
+}
+.doc-prose blockquote {
+  margin: 0.75rem 0;
+  padding: 0.5rem 1rem;
+  border-left: 3px solid var(--color-brand);
+  background: var(--color-brand-soft);
+  border-radius: 0 6px 6px 0;
+}
+.doc-prose code {
+  font-family: var(--font-mono), monospace;
+  font-size: 0.82em;
+  background: #f1f5f9;
+  border-radius: 4px;
+  padding: 0.1em 0.35em;
+}
+.doc-prose pre {
+  margin: 0.75rem 0;
+  padding: 0.75rem 1rem;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  overflow-x: auto;
+}
+.doc-prose pre code {
+  background: none;
+  padding: 0;
+  font-size: 0.8rem;
+}
+.doc-prose table {
+  width: 100%;
+  margin: 0.75rem 0;
+  border-collapse: collapse;
+  font-size: 0.85rem;
+}
+.doc-prose th,
+.doc-prose td {
+  border: 1px solid #e2e8f0;
+  padding: 0.4rem 0.6rem;
+  text-align: left;
+}
+.doc-prose th {
+  background: #f8fafc;
+  font-weight: 600;
+  color: #1e293b;
+}
+.doc-prose hr {
+  margin: 1.5rem 0;
+  border: 0;
+  border-top: 1px solid #e2e8f0;
+}
+.doc-prose strong {
+  color: #0f172a;
 }
