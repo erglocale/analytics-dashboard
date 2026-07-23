@@ -14,14 +14,15 @@ const SECTIONS: { title: string; fields: FieldDef[] }[] = [
       { key: "soc_floor_pct", label: "SOC floor (%)", help: "Below this counts as an unsafe day", min: 5, max: 40, step: 5, unit: "%" },
       { key: "tolerance_pct", label: "Tolerance (unsafe days %)", help: "5% = P95: a top-up on at most ~1 driving day in 20", min: 1, max: 15, step: 1, unit: "%" },
       { key: "cap_buffer_pct", label: "Cap buffer (%)", help: "Headroom added on top of the lowest safe cap", min: 0, max: 15, step: 5, unit: "%" },
-      { key: "reach_safety_buffer_km", label: "Reach reserve (km)", help: "Range kept aside when checking charger reach", min: 0, max: 15, step: 1, unit: " km" },
+      { key: "reach_reserve_soc_pct", label: "Reach reserve (SOC %)", help: "Battery the vehicle must still have on arriving at a charger", min: 0, max: 15, step: 1, unit: "%" },
     ],
   },
   {
     title: "Charging behaviour",
     fields: [
+      { key: "fast_kw_boundary", label: "Fast-charger threshold (kW)", help: "Chargers at or above this power count as fast", min: 5, max: 50, step: 1, unit: " kW" },
       { key: "min_slow_min", label: "Min slow-charge window (min)", help: "Idle gaps shorter than this are not used", min: 30, max: 240, step: 15, unit: "m" },
-      { key: "fast_boost_kw", label: "Fast top-up rate (kW)", help: "Power assumed for the emergency fast charge", min: 10, max: 100, step: 5, unit: " kW" },
+      { key: "fast_boost_kw", label: "Fast top-up rate (kW)", help: "Power assumed for the emergency fast charge", min: 0, max: 100, step: 5, unit: " kW" },
       { key: "fast_min_min", label: "Fast top-up duration (min)", help: "Minimum minutes for a fast top-up", min: 10, max: 60, step: 5, unit: "m" },
       { key: "fast_target_soc_pct", label: "Fast top-up target (SOC %)", help: "Fast charge stops at this level", min: 30, max: 80, step: 5, unit: "%" },
     ],
