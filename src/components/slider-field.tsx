@@ -8,6 +8,8 @@ export type FieldDef = {
   max: number;
   step: number;
   unit?: string;
+  // Used when the API's params payload doesn't have the key yet (older API).
+  fallback: number;
 };
 
 export function SliderField({

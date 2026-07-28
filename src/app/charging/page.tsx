@@ -16,15 +16,15 @@ const TABS = [
 type TabId = (typeof TABS)[number]["id"];
 
 const FIELDS: FieldDef[] = [
-  { key: "rt_low_soc_pct", label: "Urgent below (SOC %)", help: "At the hub under this → always nudge", min: 10, max: 60, step: 5, unit: "%" },
-  { key: "rt_room_pct", label: "Min room below cap (%)", help: "Opportunistic only if SOC is this far under the cap", min: 5, max: 100, step: 5, unit: "%" },
-  { key: "rt_min_stay_min", label: "Min predicted stay (min)", help: "Only nudge if even the busy-day estimate says the vehicle stays this long", min: 15, max: 180, step: 15, unit: "m" },
-  { key: "rt_radius_km", label: "Hub radius (km)", help: "How far from a hub still counts", min: 0.5, max: 20, step: 0.5, unit: " km" },
-  { key: "rt_at_hub_km", label: "At-hub distance (km)", help: "Physically at the hub", min: 0.1, max: 2, step: 0.1, unit: " km" },
-  { key: "rt_min_move_soc", label: "Min SOC to drive over (%)", help: "Won't suggest driving to a hub below this", min: 5, max: 50, step: 5, unit: "%" },
-  { key: "rt_cooldown_min", label: "Cooldown (min)", help: "Don't re-nudge the same vehicle within this window", min: 0, max: 360, step: 15, unit: "m" },
-  { key: "rt_recent_move_min", label: "Mid-trip window (min)", help: "Ongoing trip + moved within this = still driving", min: 5, max: 60, step: 5, unit: "m" },
-  { key: "rt_settle_min", label: "Settle time (min)", help: "Wait this long before resolving a nudge's outcome", min: 15, max: 240, step: 15, unit: "m" },
+  { key: "rt_low_soc_pct", label: "Urgent below (SOC %)", help: "At the hub under this → always nudge", min: 10, max: 60, step: 5, unit: "%", fallback: 35 },
+  { key: "rt_room_pct", label: "Min room below cap (%)", help: "Opportunistic only if SOC is this far under the cap", min: 5, max: 100, step: 5, unit: "%", fallback: 15 },
+  { key: "rt_min_stay_min", label: "Min predicted stay (min)", help: "Only nudge if even the busy-day estimate says the vehicle stays this long", min: 15, max: 180, step: 15, unit: "m", fallback: 45 },
+  { key: "rt_radius_km", label: "Hub radius (km)", help: "How far from a hub still counts", min: 0.5, max: 20, step: 0.5, unit: " km", fallback: 5 },
+  { key: "rt_at_hub_km", label: "At-hub distance (km)", help: "Physically at the hub", min: 0.1, max: 2, step: 0.1, unit: " km", fallback: 0.5 },
+  { key: "rt_min_move_soc", label: "Min SOC to drive over (%)", help: "Won't suggest driving to a hub below this", min: 5, max: 50, step: 5, unit: "%", fallback: 20 },
+  { key: "rt_cooldown_min", label: "Cooldown (min)", help: "Don't re-nudge the same vehicle within this window", min: 0, max: 360, step: 15, unit: "m", fallback: 90 },
+  { key: "rt_recent_move_min", label: "Mid-trip window (min)", help: "Ongoing trip + moved within this = still driving", min: 5, max: 60, step: 5, unit: "m", fallback: 15 },
+  { key: "rt_settle_min", label: "Settle time (min)", help: "Wait this long before resolving a nudge's outcome", min: 15, max: 240, step: 15, unit: "m", fallback: 60 },
 ];
 
 const STATUS_STYLE: Record<string, { rail: string; badge: string }> = {
@@ -59,7 +59,10 @@ export default function ChargingPage() {
       .params(gid)
       .then((p) => {
         const v: Num = {};
-        for (const f of FIELDS) v[f.key] = Number(p.effective[f.key]);
+        for (const f of FIELDS) {
+          const n = Number(p.effective[f.key]);
+          v[f.key] = Number.isFinite(n) ? n : f.fallback;
+        }
         setValues(v);
       })
       .catch((e) => setError(String(e)));
