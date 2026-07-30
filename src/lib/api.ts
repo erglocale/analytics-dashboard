@@ -147,5 +147,7 @@ export const api = {
     post<ProfileRecompute>(`/api/groups/${gid}/profiles/recompute`),
   publishProfiles: (gid: string) =>
     post<{ published: number }>(`/api/groups/${gid}/profiles/publish`),
+  dataWindow: (gid: string, days = 0) =>
+    get<{ from: string; to: string }>(`/api/groups/${gid}/data-window?days=${days}`),
   doc: (id: string) => get<{ id: string; title: string; markdown: string }>(`/api/docs/${id}`),
 };

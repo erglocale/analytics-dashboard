@@ -8,9 +8,18 @@ import { api } from "@/lib/api";
 const TABS = [
   { id: "charging", label: "Charging suggestions" },
   { id: "prediction", label: "Trip prediction" },
+  { id: "cap", label: "SOC cap parameters" },
 ] as const;
 
 type TabId = (typeof TABS)[number]["id"];
+
+// The docs cross-reference each other by repo filename; map the ones this UI
+// serves to their tab so those links switch tabs instead of 404ing.
+const MD_TABS: Record<string, TabId> = {
+  "REALTIME_SUGGESTION.md": "charging",
+  "TRIP_PREDICTION.md": "prediction",
+  "CAP_PARAMETERS.md": "cap",
+};
 
 export default function DocsPage() {
   const [tab, setTab] = useState<TabId>("charging");
@@ -64,7 +73,38 @@ export default function DocsPage() {
       {!error && !md && <p className="text-sm text-slate-500">Loading…</p>}
       {md && (
         <article className="doc-prose">
-          <ReactMarkdown remarkPlugins={[remarkGfm]}>{md}</ReactMarkdown>
+          <ReactMarkdown
+            remarkPlugins={[remarkGfm]}
+            components={{
+              a: ({ href, children }) => {
+                const file = (href ?? "").split("/").pop() ?? "";
+                const target = MD_TABS[file];
+                if (target)
+                  return (
+                    <a
+                      href="#"
+                      onClick={(e) => {
+                        e.preventDefault();
+                        setTab(target);
+                        window.scrollTo({ top: 0 });
+                      }}
+                    >
+                      {children}
+                    </a>
+                  );
+                if (/^https?:/.test(href ?? ""))
+                  return (
+                    <a href={href} target="_blank" rel="noreferrer">
+                      {children}
+                    </a>
+                  );
+                // Repo-only doc with no tab here — show the name, not a dead link.
+                return <span>{children}</span>;
+              },
+            }}
+          >
+            {md}
+          </ReactMarkdown>
         </article>
       )}
     </div>

@@ -14,7 +14,7 @@ const SECTIONS: { title: string; fields: FieldDef[] }[] = [
       { key: "soc_floor_pct", label: "SOC floor (%)", help: "Below this counts as an unsafe day", min: 5, max: 40, step: 5, unit: "%", fallback: 15 },
       { key: "tolerance_pct", label: "Tolerance (unsafe days %)", help: "5% = P95: a top-up on at most ~1 driving day in 20", min: 1, max: 15, step: 1, unit: "%", fallback: 5 },
       { key: "cap_buffer_pct", label: "Cap buffer (%)", help: "Headroom added on top of the lowest safe cap", min: 0, max: 15, step: 5, unit: "%", fallback: 5 },
-      { key: "reach_reserve_soc_pct", label: "Reach reserve (SOC %)", help: "Battery the vehicle must still have on arriving at a charger", min: 0, max: 15, step: 1, unit: "%", fallback: 5 },
+      { key: "reach_reserve_soc_pct", label: "Reach reserve (SOC %)", help: "Battery the vehicle must still have on arriving at a charger", min: 0, max: 50, step: 1, unit: "%", fallback: 5 },
     ],
   },
   {
@@ -32,7 +32,7 @@ const SECTIONS: { title: string; fields: FieldDef[] }[] = [
       { key: "min_slow_min", label: "Min slow-charge window (min)", help: "Idle gaps shorter than this are not used", min: 30, max: 240, step: 15, unit: "m", fallback: 90 },
       { key: "fast_boost_kw", label: "Fast top-up rate (kW)", help: "Power assumed for the emergency fast charge", min: 0, max: 100, step: 5, unit: " kW", fallback: 30 },
       { key: "fast_min_min", label: "Fast top-up duration (min)", help: "Minimum minutes for a fast top-up", min: 10, max: 60, step: 5, unit: "m", fallback: 20 },
-      { key: "fast_target_soc_pct", label: "Fast top-up target (SOC %)", help: "Fast charge stops at this level", min: 30, max: 80, step: 5, unit: "%", fallback: 50 },
+      { key: "fast_target_soc_pct", label: "Fast top-up target (SOC %)", help: "Fast charge stops at this level", min: 0, max: 100, step: 5, unit: "%", fallback: 80 },
     ],
   },
   {
@@ -52,10 +52,28 @@ export function CapSettings({ gid }: { gid: string }) {
   const [values, setValues] = useState<Num | null>(null);
   const [saveState, setSaveState] = useState<"idle" | "saving" | "saved" | "error">("idle");
   const [error, setError] = useState<string | null>(null);
+  const [allWindow, setAllWindow] = useState<{ from: string; to: string } | null>(null);
+  const allHistory = values !== null && values.window_days === 0;
+
+  // Only fetched when "all history" is on, to show the real dates it covers.
+  useEffect(() => {
+    if (!allHistory) return;
+    let cancelled = false;
+    api
+      .dataWindow(gid)
+      .then((w) => {
+        if (!cancelled) setAllWindow(w);
+      })
+      .catch(() => {});
+    return () => {
+      cancelled = true;
+    };
+  }, [gid, allHistory]);
 
   useEffect(() => {
     setValues(null);
     setError(null);
+    setAllWindow(null);
     api
       .params(gid)
       .then((p) => {
@@ -128,8 +146,9 @@ export function CapSettings({ gid }: { gid: string }) {
                     </label>
                     {values[f.key] === 0 && (
                       <p className="text-xs text-slate-400">
-                        The backtest replays everything from the fleet&apos;s first day of
-                        data (after its telematics devices were installed).
+                        {allWindow
+                          ? `Replays ${allWindow.from} → ${allWindow.to} — everything since the fleet's telematics devices were installed.`
+                          : "The backtest replays everything from the fleet's first day of data (after its telematics devices were installed)."}
                       </p>
                     )}
                   </div>

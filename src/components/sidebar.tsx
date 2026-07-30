@@ -8,8 +8,6 @@ import { useGroup } from "@/lib/group-context";
 const NAV = [
   { href: "/suggestions", label: "SOC caps", hint: "per-vehicle charge limits" },
   { href: "/charging", label: "Charging", hint: "realtime nudges & settings" },
-  { href: "/past-analysis", label: "Past analysis", hint: "replay a window" },
-  { href: "/fleet", label: "Fleet", hint: "whole-fleet view" },
   { href: "/docs", label: "Docs", hint: "how it works" },
 ];
 
