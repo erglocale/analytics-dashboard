@@ -155,6 +155,7 @@ function CapsTable({ gid }: { gid: string }) {
               onClick={() => {
                 setPreview(null);
                 setPublishState("idle");
+                api.discardCaps(gid).catch(() => {});
               }}
               className="text-sm text-slate-500 hover:text-slate-700"
             >
@@ -214,7 +215,7 @@ function CapsTable({ gid }: { gid: string }) {
                       {r.suggested_cap}%
                     </td>
                     <td className="px-4 py-2.5 text-right font-mono text-slate-600">
-                      {r.lowest_safe_cap}%
+                      {r.lowest_safe_cap != null ? `${r.lowest_safe_cap}%` : "—"}
                     </td>
                     <td className="px-4 py-2.5 text-right font-mono text-slate-600">
                       {r.operating_days}

@@ -7,6 +7,8 @@ import { useGroup } from "@/lib/group-context";
 
 const NAV = [
   { href: "/suggestions", label: "SOC caps", hint: "per-vehicle charge limits" },
+  { href: "/benefits", label: "Battery benefit", hint: "kWh saved & battery life" },
+  { href: "/backtest", label: "Backtest", hint: "if our suggestions had been used" },
   { href: "/charging", label: "Charging", hint: "realtime nudges & settings" },
   { href: "/docs", label: "Docs", hint: "how it works" },
 ];

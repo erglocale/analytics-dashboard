@@ -12,13 +12,20 @@ async function post<T>(path: string): Promise<T> {
   return r.json();
 }
 
+async function del<T>(path: string): Promise<T> {
+  const r = await fetch(`${BASE}${path}`, { method: "DELETE" });
+  if (!r.ok) throw new Error(`${r.status} ${await r.text()}`);
+  return r.json();
+}
+
 export type Group = { id: string; name: string; hostType: string | null };
 
 export type CapRow = {
   ev_id: number;
   label: string;
   suggested_cap: number;
-  lowest_safe_cap: number;
+  // null = over the tolerance even at 100%, so not capped
+  lowest_safe_cap: number | null;
   unsafe_pct: number;
   structural_pct: number | null;
   tolerance_pct: number | null;
@@ -121,7 +128,117 @@ export type NudgeHistoryRow = {
   created_at: string;
 };
 
+export type BenefitRow = {
+  ev_id: number;
+  label: string;
+  battery_kwh: number;
+  suggested_cap: number;
+  km_per_day: number;
+  days_per_week: number;
+  wh_per_km: number;
+  // only on a fresh (unsaved) run: km/day from the cap run's trips or assumed
+  driving_source?: "trips" | "assumed";
+  kwh_per_year_full: number;
+  kwh_per_year_cap: number;
+  kwh_saved_per_year: number;
+  kwh_saved_8y: number;
+  capacity_8y_full_pct: number;
+  capacity_8y_cap_pct: number;
+  // null = more than 40 years
+  years_to_80_full: number | null;
+  years_to_80_cap: number | null;
+  top_ups_per_day: number;
+  life: { year: number; full_pct: number; cap_pct: number }[];
+  window_from?: string;
+  window_to?: string;
+  computed_at?: string;
+};
+
+export type BenefitRecompute = {
+  status: "idle" | "running" | "done" | "error";
+  started_at?: string;
+  finished_at?: string;
+  error?: string;
+  window_from?: string;
+  window_to?: string;
+  rows?: BenefitRow[];
+  skipped?: string[];
+};
+
+export type BacktestMonth = {
+  month: string;
+  kwh_saved: number;
+  hub_kwh: number;
+  public_kwh: number;
+  kwh_moved: number;
+  public_after_kwh: number;
+};
+
+export type BacktestMovedSession = {
+  label: string;
+  start: string;
+  public_kwh: number;
+  moved_kwh: number;
+  nudge_time: string;
+  nudge_hub: string;
+  nudge_trigger: string;
+  nudge_soc: number;
+};
+
+export type BacktestResult = {
+  data_from: string;
+  data_to: string;
+  period_from: string;
+  period_to: string;
+  months: number;
+  // the window each month's cap was learned from
+  cap_windows: { month: string; from: string; to: string }[];
+  caps: { ev_id: number; label: string; months: { month: string; cap: number }[] }[];
+  not_simulated: string[];
+  monthly: BacktestMonth[];
+  km: {
+    ev_id: number;
+    label: string;
+    capacity_full_pct: number;
+    capacity_cap_pct: number;
+    km_per_full_charge: number;
+    // extra range available on every day it drove, added up over the period
+    total_extra_km: number;
+  }[];
+  moved_sessions: BacktestMovedSession[];
+  totals: {
+    kwh_saved: number;
+    km_per_full_charge: number;
+    total_extra_km: number;
+    kwh_moved: number;
+    public_kwh: number;
+    public_after_kwh: number;
+    hub_kwh: number;
+    public_sessions: number;
+    moved_sessions: number;
+  };
+};
+
+export type BacktestStatus = {
+  status: "idle" | "running" | "done" | "error";
+  started_at?: string;
+  finished_at?: string;
+  error?: string;
+  result?: BacktestResult;
+};
+
 export const api = {
+  startBacktest: (gid: string) => post<{ status: string }>(`/api/groups/${gid}/backtest`),
+  backtestStatus: (gid: string) => get<BacktestStatus>(`/api/groups/${gid}/backtest`),
+  benefits: (gid: string) => get<BenefitRow[]>(`/api/groups/${gid}/benefits`),
+  startBenefitRecompute: (gid: string) =>
+    post<{ status: string }>(`/api/groups/${gid}/benefits/recompute`),
+  benefitRecomputeStatus: (gid: string) =>
+    get<BenefitRecompute>(`/api/groups/${gid}/benefits/recompute`),
+  publishBenefits: (gid: string) =>
+    post<{ published: number }>(`/api/groups/${gid}/benefits/publish`),
+  discardBenefits: (gid: string) => del<{ status: string }>(`/api/groups/${gid}/benefits/recompute`),
+  discardCaps: (gid: string) => del<{ status: string }>(`/api/groups/${gid}/soc-caps/recompute`),
   groups: () => get<Group[]>("/api/groups"),
   socCaps: (gid: string) => get<CapRow[]>(`/api/groups/${gid}/soc-caps`),
   params: (gid: string) => get<ParamsResponse>(`/api/groups/${gid}/params`),
