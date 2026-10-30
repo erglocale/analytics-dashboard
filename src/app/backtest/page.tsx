@@ -392,13 +392,26 @@ function HowItWorks({ gid, name }: { gid: string | null; name: string }) {
   return (
     <div className="max-w-3xl">
       <div className="mb-6 rounded-lg border border-slate-200 bg-slate-50 p-4 text-sm text-slate-700">
-        <p className="font-semibold text-slate-900">The question we answer</p>
-        <p className="mt-1">
-          &ldquo;If this fleet had followed our charge-limit (SOC cap) and charging suggestions from
-          the very start, what would it have gained?&rdquo; We answer it by replaying the
-          fleet&apos;s real history with our suggestions switched on, and comparing that with what
-          really happened.
-        </p>
+        <p className="font-semibold text-slate-900">What is this page?</p>
+        <ul className="ml-5 mt-1 list-disc space-y-1">
+          <li>
+            It answers one question: &ldquo;What if this fleet had followed our tips from day
+            one?&rdquo;
+          </li>
+          <li>
+            Tip 1, the <b>SOC cap</b>: don&apos;t charge the battery all the way to 100%. Stop
+            earlier, for example at 80%. (SOC means how full the battery is.)
+          </li>
+          <li>
+            Tip 2, the <b>charging suggestions</b>: charge at your own hub when you&apos;re nearby,
+            instead of paying at a public charger later.
+          </li>
+          <li>
+            We replay the fleet&apos;s real trips with these tips switched on, and compare with
+            what really happened.
+          </li>
+          <li>kWh is the unit of electricity, like litres for petrol.</li>
+        </ul>
         {!f && (
           <p className="mt-2 text-xs text-slate-500">
             Run the backtest on the Results tab to see this fleet&apos;s own numbers under each step.
@@ -406,154 +419,102 @@ function HowItWorks({ gid, name }: { gid: string | null; name: string }) {
         )}
       </div>
 
-      <Step n={1} title="Pick the period" fleet={f?.period}>
-        <li>We look at all the data we have for the fleet, from its first trip to today.</li>
-        <li>
-          We only use <b>full calendar months</b>. If the data starts halfway through a month, that
-          month is skipped. The current month is skipped too, because it isn&apos;t over yet.
-        </li>
+      <Step n={1} title="Pick the months to look at" fleet={f?.period}>
+        <li>We use all the trip data we have for the fleet.</li>
+        <li>We only count full months, from the 1st to the last day.</li>
+        <li>If the data starts in the middle of a month, we skip that month.</li>
+        <li>We also skip this month, because it isn&apos;t over yet.</li>
       </Step>
 
-      <Step n={2} title="Work out each vehicle's charge limit (SOC cap)" fleet={f?.caps}>
+      <Step n={2} title="Find each vehicle's best charge limit (SOC cap)" fleet={f?.caps}>
+        <li>We take 3 months of the vehicle&apos;s real trips.</li>
+        <li>We pretend it charged to 100%, then a bit less, then a bit less again.</li>
         <li>
-          Our cap algorithm takes <b>3 months</b> of real trips and replays them again and again:
-          charging to 100%, then a few % lower each time (the step and the lowest limit come from
-          the fleet&apos;s SOC cap settings).
+          Each time, we count the <b>bad days</b>: days the battery ran too low, or it needed a
+          quick emergency charge.
         </li>
         <li>
-          It stops at the lowest limit where the vehicle still almost never runs short: at most 1
-          extra problem day in 20 driving days.
+          We keep going lower while the limit adds at most 1 extra bad day in every 20 days.
         </li>
-        <li>It then adds a small safety margin (+5%). That&apos;s the vehicle&apos;s SOC cap.</li>
+        <li>Then we add 5% extra, just to be safe. That&apos;s the vehicle&apos;s SOC cap.</li>
+        <li>The first 4 months use the cap from the first 3 months.</li>
         <li>
-          <b>Months 1–4</b> use the cap learned from the <b>first 3 months</b>, including those 3
-          months themselves.
+          After that, every month gets a new cap from the 3 months just before it. So the cap
+          changes when the vehicle drives more or less.
         </li>
-        <li>
-          <b>From month 5</b>, the cap is worked out again <b>every month</b>, from the 3 months just
-          before it. For example, month 5 uses months 2–4. So the cap follows how the vehicle is
-          being used.
-        </li>
-        <li>
-          A vehicle whose cap comes out at 100% isn&apos;t capped that month. Each vehicle&apos;s
-          usual parking pattern (used in Box 3) is learned from the same 3 months.
-        </li>
+        <li>If the answer is 100%, that vehicle is simply not capped.</li>
       </Step>
 
-      <Step n={3} title="Box 1: kWh saved from the SOC cap" fleet={f?.saved}>
+      <Step n={3} title="Box 1: electricity saved (kWh)" fleet={f?.saved}>
+        <li>A battery charged to 100% doesn&apos;t stop right away when it&apos;s full.</li>
         <li>
-          When a vehicle charges to 100%, it doesn&apos;t stop the moment the battery is full. For
-          about 30–40 minutes it keeps the charger and its own electronics running to balance the
-          cells. That energy is wasted.
+          It keeps the charger on for about 30–40 more minutes to balance itself. That electricity
+          is wasted.
         </li>
-        <li>A vehicle that stops at its cap (say 75%) never reaches that stage, so it skips the waste.</li>
+        <li>A vehicle that stops at its cap, say 80%, never gets there, so it doesn&apos;t waste it.</li>
         <li>
-          For every vehicle and every month, we take <b>how it really drove</b> that month (km per
-          day, days driven, energy per km) and run it through a battery model twice: once charging
-          to 100%, once charging to that month&apos;s cap.
+          For each vehicle and each month, we use a battery calculator twice: once charging to
+          100%, once charging to the cap.
         </li>
-        <li>
-          The difference in electricity used is the saving for that month. We add up all months
-          and all vehicles.
-        </li>
-        <li>
-          The battery model is copied from our battery-sim tool, which is based on published
-          battery research.
-        </li>
+        <li>The difference is the electricity saved. We add up all months and all vehicles.</li>
       </Step>
 
-      <Step n={4} title="Box 2: km unlocked from the SOC cap" fleet={f?.km}>
+      <Step n={4} title="Box 2: extra range on a full charge (km)" fleet={f?.km}>
+        <li>Batteries get weaker over time, like a phone battery.</li>
+        <li>They get weaker faster when they sit at 100% for a long time.</li>
+        <li>A lower charge limit means the battery wears out more slowly.</li>
         <li>
-          A battery wears out faster when it sits full. Keeping it lower (at the cap) slows that
-          wear.
+          We work out how strong each battery would be at the end: charging to 100% vs charging to
+          the cap.
         </li>
         <li>
-          Month by month, using each vehicle&apos;s real driving, the battery model adds up how much
-          the battery wore: once if it had always charged to 100%, once with that month&apos;s cap.
-          At the end of the period that gives the battery left in each case.
+          The stronger battery holds a bit more energy, so the vehicle can go a few km further on
+          a full charge.
         </li>
-        <li>
-          The extra battery kept, turned into km using how far the vehicle goes per kWh, is the
-          extra range it gets every time it&apos;s fully charged.
-        </li>
-        <li>We add this up across the fleet. That&apos;s the &ldquo;km unlocked&rdquo; number.</li>
+        <li>We add up these extra km for all vehicles.</li>
       </Step>
 
-      <Step
-        n={5}
-        title="Box 3: kWh moved from public chargers to the fleet's own hubs"
-        fleet={f?.moved}
-      >
+      <Step n={5} title="Box 3: charging moved from public chargers to your hub" fleet={f?.moved}>
         <li>
-          <b>What really happened:</b> we take every real charging session and split it the same
-          way as the Reports page. Sessions at the fleet&apos;s own hub locations count as
-          &ldquo;hub&rdquo;, everything else as &ldquo;public&rdquo;.
+          First we look at real charging: was each charge at the fleet&apos;s own hub, or at a
+          public charger?
         </li>
-        <li>
-          <b>Would our charging suggestion have fired?</b> For every real stop where a vehicle
-          was parked, we check the <b>same rules our live charging suggestions use</b>, every 30
-          minutes while it&apos;s parked:
-          <ul className="ml-5 mt-1 list-[circle] space-y-1">
-            <li>it&apos;s parked within 5 km of one of the fleet&apos;s hubs, and</li>
-            <li>
-              either it&apos;s <b>at the hub with the battery below 35%</b> (urgent), or it&apos;s
-              <b> at least 15% below its charge limit</b> and its usual pattern says it will stay
-              parked for at least 45 more minutes,
-            </li>
-            <li>it has at least 20% battery if it has to drive over to the hub, and</li>
-            <li>a charger at that hub is free.</li>
-          </ul>
-        </li>
-        <li>
-          <b>If it would have fired,</b> the vehicle charges at the hub until it drives off or
-          reaches its limit. That energy is now already in its battery.
-        </li>
-        <li>
-          <b>Its next real public charge needed that much less.</b> So the moved kWh for that
-          public charge = the smaller of the public charge and the hub energy from the suggestion.
-        </li>
-        <li>
-          We add this up over every public charge. The results page also lists each public
-          charge that could have been moved, with the suggestion behind it.
-        </li>
+        <li>Then, for every time a vehicle was parked, we ask: &ldquo;Would we have sent a tip to charge now?&rdquo;</li>
+        <li>We send a tip only when:</li>
+        <ul className="ml-5 list-[circle] space-y-1">
+          <li>the vehicle is within 5 km of its hub, and</li>
+          <li>
+            its battery is very low (under 35%) at the hub, or it has room to charge and will stay
+            parked a while, and
+          </li>
+          <li>a charger at the hub is free.</li>
+        </ul>
+        <li>If the tip would have been sent, the vehicle charges at the hub.</li>
+        <li>So its next public charge needs less electricity. That part is &ldquo;moved&rdquo; to the hub.</li>
+        <li>We add this up for every public charge.</li>
       </Step>
 
-      <Step n={6} title="Box 4: total extra km from the SOC cap" fleet={f?.totalKm}>
+      <Step n={6} title="Box 4: total extra km for the whole fleet" fleet={f?.totalKm}>
+        <li>Box 2 shows the extra km on one full charge, at the end.</li>
+        <li>But the battery saving builds up slowly, a little every day.</li>
+        <li>So each day the vehicle drove, it had a few extra km to spare.</li>
+        <li>We add up those extra km for every day and every vehicle.</li>
         <li>
-          Box 2 is the extra range on one full charge at the end of the period. But the cap slows
-          battery wear a little <b>every day</b>, so that extra range starts at 0 and grows month
-          by month.
-        </li>
-        <li>
-          For every vehicle and every month, we take the extra range it had that month and
-          multiply it by the <b>days it actually drove</b>. Adding up all months and all vehicles
-          gives the whole fleet&apos;s total extra km over the period.
-        </li>
-        <li>
-          This is extra range that was <b>available</b>: more battery to spare every day. The
-          vehicles still drove the same trips, so it isn&apos;t extra km they drove.
+          This is extra range that was there if needed. The vehicles still drove the same trips.
         </li>
       </Step>
 
       <div className="rounded-lg border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900">
         <p className="mb-1 font-semibold">Good to know</p>
         <ul className="ml-5 list-disc space-y-1 leading-relaxed">
-          <li>These are estimates of what could have happened, not measurements.</li>
-          <li>We assume drivers followed every charging suggestion that would have been sent.</li>
+          <li>These numbers are good estimates, not exact measurements.</li>
+          <li>We assume drivers followed every tip.</li>
+          <li>Public charges far away from the hub can&apos;t be moved, so they stay public.</li>
           <li>
-            Public charges far from any hub, or when the vehicle wasn&apos;t parked near a hub
-            beforehand, stay public: our suggestions can&apos;t move those.
+            The battery calculator is based on lab tests of similar batteries. The difference
+            between 100% and the cap is more reliable than the exact numbers.
           </li>
-          <li>
-            Battery wear comes from lab tests on similar battery cells, so the difference between
-            100% and the cap is more reliable than the exact percentages.
-          </li>
-          <li>
-            Months 1–3 use a cap learned from those same months, so they &ldquo;know&rdquo; their
-            own data. From month 4 on, every cap is learned only from earlier months, as it would
-            be in real use.
-          </li>
-          <li>Nothing here is saved, and nothing changes for the vehicles.</li>
+          <li>Nothing here changes anything on the real vehicles.</li>
         </ul>
       </div>
     </div>
